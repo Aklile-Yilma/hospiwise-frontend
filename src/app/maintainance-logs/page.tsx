@@ -41,6 +41,7 @@ export default function MaintenanceHistoryManager() {
   const [open, setOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [equipmentOptions, setEquipmentOptions] = useState<any[]>([]);
+  const [isTableLoading, setIsTableLoading] = useState(true); 
   const [form, setForm] = useState({
     equipment: {
       name: '',
@@ -56,11 +57,14 @@ export default function MaintenanceHistoryManager() {
 
   const fetchMaintenanceHistory = async () => {
     try {
+      setIsTableLoading(true); 
       const response = await axios.get('https://hospiwise-backend.onrender.com/api/maintenance-history');
       console.log("response", response.data);
       setData(response.data);
     } catch (error) {
       console.error('Error fetching maintenance history:', error);
+    } finally {
+      setIsTableLoading(false); 
     }
   };
 
@@ -79,6 +83,18 @@ export default function MaintenanceHistoryManager() {
     fetchEquipment();
   }, []);
 
+  const validateForm = () => {
+    const { equipment, maintenanceDate, issue, description, resolution, technician } = form;
+    return (
+      equipment.id &&
+      maintenanceDate &&
+      issue &&
+      description.trim() &&
+      resolution.trim() &&
+      technician.trim()
+    );
+  };
+  
 
   const handleOpen = (index: number | null = null) => {
     setEditIndex(index);
@@ -131,6 +147,11 @@ export default function MaintenanceHistoryManager() {
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+  
     setIsLoading(true); // Start loading
     try {
       if (editIndex !== null) {
@@ -204,7 +225,14 @@ export default function MaintenanceHistoryManager() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.map((row, index) => (
+              {isTableLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data.map((row, index) => (
                 <TableRow key={index}>
                   <TableCell>{row.equipment?.name || 'N/A'}</TableCell>
                   <TableCell>{new Date(row.maintenanceDate).toLocaleDateString()}</TableCell>
@@ -225,7 +253,8 @@ export default function MaintenanceHistoryManager() {
                     </Tooltip>
                   </TableCell>
                 </TableRow>
-              ))}
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
