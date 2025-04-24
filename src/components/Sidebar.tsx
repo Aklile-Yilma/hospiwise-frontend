@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import {
   Box, Drawer, List, ListItem, ListItemIcon, ListItemText,
-  Divider, Typography, IconButton
+  Divider, IconButton
 } from '@mui/material';
 import { Home, Build, ListAlt, MoreHoriz, Menu } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const drawerWidth = 250;
 
@@ -40,10 +41,10 @@ const HospiwiseSidebar = () => {
         }}
       >
         <Box sx={{ textAlign: 'center', marginBottom: '30px',  }}>
-          <img
+          <Image
             src="/hospiwise.png"
             alt="Hospiwise Logo"
-            style={{ width: '80%', maxWidth: '150px', marginBottom: '20px', marginLeft: '20px' }}
+            style={{ width: '80%', maxWidth: '150px', marginBottom: '20px', marginLeft: '20px', height: 'auto' }}
           />
         </Box>
         <Divider />
