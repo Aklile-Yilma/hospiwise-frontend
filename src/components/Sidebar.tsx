@@ -4,7 +4,6 @@ import {
   Home, 
   Wrench, 
   ClipboardList, 
-  MoreHorizontal, 
   Menu, 
   X,
   ChevronRight,

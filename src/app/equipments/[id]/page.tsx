@@ -2,6 +2,7 @@
 import React, { useState, KeyboardEvent, ChangeEvent } from "react";
 import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, DollarSign, User, Zap } from "lucide-react";
 import { api } from "@/api/api";
+import Image from "next/image";
 
 // Define TypeScript types for equipment data
 interface MaintenanceLog {
@@ -223,7 +224,9 @@ const EquipmentDetailsPage: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Equipment Image */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-              <img
+              <Image
+                width={200}
+                height={200}
                 src={equipment.imageUrl}
                 alt={equipment.name}
                 className="w-full h-64 object-cover"
