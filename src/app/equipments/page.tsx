@@ -131,6 +131,7 @@ export default function EquipmentManager() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>Equipment ID</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Serial Number</TableCell>
                 <TableCell>Location</TableCell>
@@ -148,6 +149,7 @@ export default function EquipmentManager() {
               ) : (
                 equipmentList.map((eq, index) => (
                   <TableRow key={eq._id}>
+                    <TableCell>{eq._id}</TableCell>
                     <TableCell>{eq.name}</TableCell>
                     <TableCell>{eq.serialNumber}</TableCell>
                     <TableCell>{eq.location}</TableCell>

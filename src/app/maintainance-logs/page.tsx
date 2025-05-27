@@ -215,6 +215,7 @@ export default function MaintenanceHistoryManager() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell>Maintainance ID</TableCell>
                 <TableCell>Equipment</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Issue</TableCell>
@@ -234,6 +235,7 @@ export default function MaintenanceHistoryManager() {
               ) : (
                 data.map((row, index) => (
                 <TableRow key={index}>
+                  <TableCell>{row._id || 'N/A'}</TableCell>
                   <TableCell>{row.equipment?.name || 'N/A'}</TableCell>
                   <TableCell>{new Date(row.maintenanceDate).toLocaleDateString()}</TableCell>
                   <TableCell>{issueEnum[row.issue]}</TableCell>
