@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, KeyboardEvent, ChangeEvent } from "react";
 import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, DollarSign, User, Zap } from "lucide-react";
+import { api } from "@/api/api";
 
 // Define TypeScript types for equipment data
 interface MaintenanceLog {
@@ -170,14 +171,20 @@ const EquipmentDetailsPage: React.FC = () => {
     setChatMessages((prev) => [...prev, { sender: "user", text: chatInput }]);
     setChatLoading(true);
 
-    try {
-      await new Promise((r) => setTimeout(r, 1500));
+    const dataT = { prompt: chatInput }
 
-      const botResponse = `Based on your query about "${equipment.name}", please ensure the air intake is clean and check for any unusual vibrations during operation. For this specific model (${equipment.model}), also verify that the pressure readings are within the 85-120 PSI range. Regular maintenance helps avoid breakdowns and extends equipment life.`;
+  try {
+      const res = await api.post("/query-ai", dataT) as any;
+
+      if (!res.ok) throw new Error("API request failed");
+
+      const data = await res.json();
+      const botResponse = data.response;
 
       setChatMessages((prev) => [...prev, { sender: "bot", text: botResponse }]);
-    } catch {
-      setChatMessages((prev) => [...prev, { sender: "bot", text: "Error fetching troubleshooting info." }]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setChatMessages((prev) => [...prev, { sender: "bot", text: "Error fetching AI response." }]);
     } finally {
       setChatLoading(false);
       setChatInput("");
@@ -226,6 +233,9 @@ const EquipmentDetailsPage: React.FC = () => {
                 <p className="text-indigo-100">Industrial-grade air compressor for high-volume applications</p>
               </div>
             </div>
+
+            {/* Predictive Stats */}
+            <PredictiveStatsComponent stats={equipment.predictiveStats} />
 
             {/* Maintenance Logs */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
@@ -291,8 +301,6 @@ const EquipmentDetailsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Predictive Stats */}
-            <PredictiveStatsComponent stats={equipment.predictiveStats} />
           </div>
 
           {/* Right Section: Troubleshooting Chat */}

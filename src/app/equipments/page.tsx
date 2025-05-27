@@ -1,30 +1,19 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Button,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  Tooltip,
-  CircularProgress,
-  Snackbar,
-  MenuItem,
-} from '@mui/material';
-import { Add, Delete, Edit } from '@mui/icons-material';
-import MuiAlert from '@mui/material/Alert';
+  Plus,
+  Trash2,
+  Edit3,
+  X,
+  Save,
+  Loader2,
+  Settings,
+  MapPin,
+  Hash,
+  CheckCircle,
+  AlertTriangle,
+  XCircle
+} from 'lucide-react';
 import axios from 'axios';
 
 export default function EquipmentManager() {
@@ -70,7 +59,7 @@ export default function EquipmentManager() {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<any>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -117,119 +106,265 @@ export default function EquipmentManager() {
     }
   };
 
+    const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      'Operational': {
+        color: 'bg-green-100 text-green-800 border-green-200',
+        icon: CheckCircle
+      },
+      'Under maintenance': {
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        icon: AlertTriangle
+      },
+      'Out of order': {
+        color: 'bg-red-100 text-red-800 border-red-200',
+        icon: XCircle
+      }
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig['Operational'];
+    const Icon = config.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full border ${config.color}`}>
+        <Icon className="w-3 h-3" />
+        {status}
+      </span>
+    );
+  };
+
   return (
-    <Box sx={{ height: '100vh', bgcolor: '#f4f6f8', py: 4 }}>
-      <Container maxWidth={"xl"}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">Equipment Manager</Typography>
-          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>
-            Add Equipment
-          </Button>
-        </Box>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
+      <div className="max-w-8xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Settings className="w-8 h-8 text-indigo-600" />
+              <h1 className="text-3xl font-bold text-gray-800">Equipment Manager</h1>
+            </div>
+            <button
+              onClick={() => handleOpen()}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              <Plus className="w-5 h-5" />
+              Add Equipment
+            </button>
+          </div>
+        </div>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Equipment ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Serial Number</TableCell>
-                <TableCell>Location</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isTableLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                equipmentList.map((eq, index) => (
-                  <TableRow key={eq._id}>
-                    <TableCell>{eq._id}</TableCell>
-                    <TableCell>{eq.name}</TableCell>
-                    <TableCell>{eq.serialNumber}</TableCell>
-                    <TableCell>{eq.location}</TableCell>
-                    <TableCell>{eq.status}</TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Edit">
-                        <IconButton onClick={() => handleOpen(index)} color="primary">
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton onClick={() => handleDelete(index)} color="error">
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <tr>
+                  <th className="text-left p-4 font-semibold text-gray-700">Equipment ID</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Name</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Serial Number</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Location</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+                  <th className="text-center p-4 font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isTableLoading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center p-12">
+                      <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                        <span className="text-gray-600 font-medium">Loading equipment...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : equipmentList.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center p-12">
+                      <div className="flex flex-col items-center gap-3">
+                        <Settings className="w-12 h-12 text-gray-300" />
+                        <span className="text-gray-500 font-medium">No equipment found</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  equipmentList.map((eq, index) => (
+                    <tr key={eq._id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 transition-all duration-200">
+                      <td className="p-4">
+                        <span className="font-mono text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">
+                          {eq._id}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Settings className="w-4 h-4 text-indigo-600" />
+                          <span className="font-medium text-gray-800">{eq.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Hash className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-700">{eq.serialNumber}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-700">{eq.location}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {getStatusBadge(eq.status)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleOpen(index)}
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-200 hover:border-indigo-300"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(index)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-        {/* Dialog */}
-        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-          <DialogTitle>{editIndex !== null ? 'Edit' : 'Add'} Equipment</DialogTitle>
-          <DialogContent dividers>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <TextField
-                label="Name"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-              <TextField
-                label="Serial Number"
-                name="serialNumber"
-                value={form.serialNumber}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-              <TextField
-                label="Location"
-                name="location"
-                value={form.location}
-                onChange={handleChange}
-                fullWidth
-              />
-            <TextField
-                select
-                label="Status"
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                fullWidth
+        {/* Modal */}
+        {open && (
+          <div className="fixed inset-0 bg-opacity-10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {editIndex !== null ? 'Edit' : 'Add'} Equipment
+                </h2>
+                <button
+                  onClick={handleClose}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Close"
                 >
-                <MenuItem value="Operational">Operational</MenuItem>
-                <MenuItem value="Under maintenance">Under maintenance</MenuItem>
-                <MenuItem value="Out of order">Out of order</MenuItem>
-            </TextField>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button variant="contained" onClick={handleSubmit} disabled={isLoading}>
-              {isLoading ? <CircularProgress size={24} /> : editIndex !== null ? 'Update' : 'Add'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="Enter equipment name"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Serial Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="serialNumber"
+                    value={form.serialNumber}
+                    onChange={handleChange}
+                    placeholder="Enter serial number"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={form.location}
+                    onChange={handleChange}
+                    placeholder="Enter equipment location"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="status" className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={form.status}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                  >
+                    <option value="">Select Status</option>
+                    <option value="Operational">Operational</option>
+                    <option value="Under maintenance">Under maintenance</option>
+                    <option value="Out of order">Out of order</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={handleClose}
+                  className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {editIndex !== null ? 'Update' : 'Add'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Snackbar */}
-        <Snackbar open={snackbar.open}  autoHideDuration={3000} onClose={handleSnackbarClose}>
-          <MuiAlert onClose={handleSnackbarClose} severity={snackbar.severity as any} sx={{ width: '100%' }}>
-            {snackbar.message}
-          </MuiAlert>
-        </Snackbar>
-      </Container>
-    </Box>
+        {snackbar.open && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border-l-4 transition-all duration-300 ${
+              snackbar.severity === 'success' 
+                ? 'bg-green-50 border-green-500 text-green-800' 
+                : 'bg-red-50 border-red-500 text-red-800'
+            }`}>
+              {snackbar.severity === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-600" />
+              )}
+              <span className="font-medium">{snackbar.message}</span>
+              <button
+                title='Delete'
+                onClick={handleSnackbarClose}
+                className="ml-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
