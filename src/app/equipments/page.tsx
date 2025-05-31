@@ -12,7 +12,12 @@ import {
   Hash,
   CheckCircle,
   AlertTriangle,
-  XCircle
+  XCircle,
+  Calendar,
+  Building,
+  Monitor,
+  Link,
+  Clock
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -20,10 +25,78 @@ export default function EquipmentManager() {
   const [equipmentList, setEquipmentList] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: '', serialNumber: '', location: '', status: '' });
+  const [form, setForm] = useState({ 
+    type: '', 
+    serialNo: '', 
+    location: '', 
+    status: '',
+    manualLink: '',
+    imageLink: '',
+    installationDate: '',
+    manufacturer: '',
+    modelType: '',
+    operatingHours: 0,
+    name: "abc"
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isTableLoading, setIsTableLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const equipmentTypes = ['Defibrillator', 'Infusion pump', 'Patient monitor', 'Suction machine'];
+  const statusOptions = ['Operational', 'Under maintenance', 'Out of order'];
+
+  // Manufacturer and model data organized by equipment type
+  const equipmentData = {
+    'Defibrillator': {
+      manufacturers: {
+        'Philips': ['HeartStart XL+', 'HeartStart FRx', 'HeartStart MRx', 'X Series'],
+        'Medtronic': ['LIFEPAK 15', 'LIFEPAK 20e', 'LIFEPAK CR Plus', 'LIFEPAK 1000'],
+        'Zoll': ['AED Plus', 'AED Pro', 'X Series', 'R Series'],
+        'Stryker': ['LIFEPAK 15', 'LIFEPAK 12', 'samaritan PAD'],
+        'Cardiac Science': ['Powerheart G5', 'Powerheart G3', 'Survivalink']
+      }
+    },
+    'Infusion pump': {
+      manufacturers: {
+        'B. Braun': ['Perfusor Space', 'Infusomat Space', 'Perfusor FM', 'Outlook ES'],
+        'Baxter': ['Sigma Spectrum', 'Colleague 3', 'AS50', 'Flo-Gard 6301'],
+        'BD': ['Alaris PC', 'Alaris VP', 'Alaris CC', 'Alaris GH'],
+        'Fresenius Kabi': ['Agilia', 'Volumat MC', 'Injectomat MC'],
+        'ICU Medical': ['Plum A+', 'LifeCare PCA', 'MedFusion 4000']
+      }
+    },
+    'Patient monitor': {
+      manufacturers: {
+        'Philips': ['IntelliVue MX800', 'IntelliVue MX700', 'IntelliVue MP70', 'SureSigns VS4'],
+        'GE Healthcare': ['CARESCAPE B850', 'CARESCAPE B650', 'Dash 4000', 'Dash 3000'],
+        'Mindray': ['BeneVision N1', 'BeneVision N15', 'BeneVision N22', 'T1'],
+        'Nihon Kohden': ['BSM-6701', 'BSM-2401', 'Life Scope TR', 'Life Scope VS'],
+        'Masimo': ['Root', 'Radius-7', 'Radical-7', 'Pronto-7']
+      }
+    },
+    'Suction machine': {
+      manufacturers: {
+        'Medela': ['Dominant 50', 'Basic 31', 'Clario', 'Vario 18'],
+        'Drive Medical': ['Heavy Duty', 'Portable', '18600-AC', '18601-D'],
+        'Laerdal': ['LCSU 4', 'LSU 4000', 'Compact Suction Unit'],
+        'Weinmann': ['ACCUVAC Rescue', 'ACCUVAC Pro', 'WM 27310'],
+        'Ohio Medical': ['Hi-Flo', 'Suction Max', 'Portable Aspirator']
+      }
+    }
+  };
+
+  // Get manufacturers for selected equipment type
+  const getManufacturers = (type: string) => {
+    return type ? Object.keys(equipmentData[type as keyof typeof equipmentData]?.manufacturers || {}) : [];
+  };
+
+  // Get models for selected manufacturer and type
+  const getModels = (type: string, manufacturer: string) => {
+    if (!type || !manufacturer) return [];
+    const manufacturers = equipmentData[type as keyof typeof equipmentData]?.manufacturers;
+    if (!manufacturers) return [];
+    return (manufacturers as Record<string, string[]>)[manufacturer] || [];
+  };
 
   const fetchEquipment = async () => {
     try {
@@ -44,9 +117,34 @@ export default function EquipmentManager() {
   const handleOpen = (index: number | null = null) => {
     setEditIndex(index);
     if (index !== null) {
-      setForm(equipmentList[index]);
+      const equipment = equipmentList[index];
+      setForm({
+        type: equipment.type || '',
+        serialNo: equipment.serialNo || equipment.serialNumber || '', // Handle both old and new field names
+        location: equipment.location || '',
+        status: equipment.status || '',
+        manualLink: equipment.manualLink || '',
+        imageLink: equipment.imageLink || '',
+        installationDate: equipment.installationDate ? equipment.installationDate.split('T')[0] : '',
+        manufacturer: equipment.manufacturer || '',
+        modelType: equipment.modelType || '',
+        operatingHours: equipment.operatingHours || 0,
+        name: equipment.name || ''
+      });
     } else {
-      setForm({ name: '', serialNumber: '', location: '', status: '' });
+      setForm({ 
+        type: '', 
+        serialNo: '', 
+        location: '', 
+        status: '',
+        manualLink: '',
+        imageLink: '',
+        installationDate: '',
+        manufacturer: '',
+        modelType: '',
+        operatingHours: 0,
+        name: "abc"
+      });
     }
     setOpen(true);
   };
@@ -60,12 +158,28 @@ export default function EquipmentManager() {
   };
 
   const handleChange = (e: React.ChangeEvent<any>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target;
+    let updatedForm = { 
+      ...form, 
+      [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : value 
+    };
+
+    // Clear dependent fields when parent fields change
+    if (name === 'type') {
+      updatedForm.manufacturer = '';
+      updatedForm.modelType = '';
+    } else if (name === 'manufacturer') {
+      updatedForm.modelType = '';
+    }
+
+    setForm(updatedForm);
   };
 
   const handleSubmit = async () => {
-    if (!form.name.trim() || !form.serialNumber.trim()) {
-      alert('Please fill in the required fields.');
+    // Validate required fields
+    if (!form.type.trim() || !form.serialNo.trim() || !form.location.trim() || 
+        !form.status.trim() || !form.installationDate || !form.manufacturer.trim() || !form.modelType.trim()) {
+      alert('Please fill in all required fields.');
       return;
     }
 
@@ -106,7 +220,7 @@ export default function EquipmentManager() {
     }
   };
 
-    const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string) => {
     const statusConfig = {
       'Operational': {
         color: 'bg-green-100 text-green-800 border-green-200',
@@ -131,6 +245,16 @@ export default function EquipmentManager() {
         {status}
       </span>
     );
+  };
+
+  const getTypeIcon = (type: string) => {
+    const icons = {
+      'Defibrillator': '⚡',
+      'Infusion pump': '💉',
+      'Patient monitor': '📊',
+      'Suction machine': '🔄'
+    };
+    return icons[type as keyof typeof icons] || '⚙️';
   };
 
   return (
@@ -160,17 +284,20 @@ export default function EquipmentManager() {
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <tr>
                   <th className="text-left p-4 font-semibold text-gray-700">Equipment ID</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Type</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Name</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Serial Number</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Location</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Manufacturer</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Operating Hours</th>
                   <th className="text-center p-4 font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {isTableLoading ? (
                   <tr>
-                    <td colSpan={6} className="text-center p-12">
+                    <td colSpan={9} className="text-center p-12">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
                         <span className="text-gray-600 font-medium">Loading equipment...</span>
@@ -179,7 +306,7 @@ export default function EquipmentManager() {
                   </tr>
                 ) : equipmentList.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center p-12">
+                    <td colSpan={9} className="text-center p-12">
                       <div className="flex flex-col items-center gap-3">
                         <Settings className="w-12 h-12 text-gray-300" />
                         <span className="text-gray-500 font-medium">No equipment found</span>
@@ -191,8 +318,14 @@ export default function EquipmentManager() {
                     <tr key={eq._id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 transition-all duration-200">
                       <td className="p-4">
                         <span className="font-mono text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">
-                          {eq._id}
+                          {eq.id || eq._id}
                         </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{getTypeIcon(eq.type)}</span>
+                          <span className="text-sm text-gray-700">{eq.type}</span>
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -203,7 +336,7 @@ export default function EquipmentManager() {
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <Hash className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-700">{eq.serialNumber}</span>
+                          <span className="text-sm text-gray-700">{eq.serialNo || eq.serialNumber}</span>
                         </div>
                       </td>
                       <td className="p-4">
@@ -213,7 +346,19 @@ export default function EquipmentManager() {
                         </div>
                       </td>
                       <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Building className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-700">{eq.manufacturer}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
                         {getStatusBadge(eq.status)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-700">{eq.operatingHours || 0}h</span>
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-center gap-2">
@@ -244,7 +389,7 @@ export default function EquipmentManager() {
         {/* Modal */}
         {open && (
           <div className="fixed inset-0 bg-opacity-10 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50">
                 <h2 className="text-2xl font-bold text-gray-800">
                   {editIndex !== null ? 'Edit' : 'Add'} Equipment
@@ -259,60 +404,176 @@ export default function EquipmentManager() {
               </div>
 
               <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Equipment Type */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Equipment Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="type"
+                      value={form.type}
+                      onChange={handleChange}
+                      disabled={editIndex !== null} // Disable in edit mode
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">Select Equipment Type</option>
+                      {equipmentTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Serial Number */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Serial Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="serialNo"
+                      value={form.serialNo}
+                      onChange={handleChange}
+                      placeholder="Enter serial number"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                    />
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Location <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={form.location}
+                      onChange={handleChange}
+                      placeholder="Enter equipment location"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Status <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="status"
+                      value={form.status}
+                      onChange={handleChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                    >
+                      <option value="">Select Status</option>
+                      {statusOptions.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Manufacturer */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Manufacturer <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="manufacturer"
+                      value={form.manufacturer}
+                      onChange={handleChange}
+                      disabled={!form.type}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {form.type ? 'Select Manufacturer' : 'Select Equipment Type First'}
+                      </option>
+                      {getManufacturers(form.type).map(manufacturer => (
+                        <option key={manufacturer} value={manufacturer}>{manufacturer}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Model Type */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Model Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="modelType"
+                      value={form.modelType}
+                      onChange={handleChange}
+                      disabled={!form.manufacturer}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {form.manufacturer ? 'Select Model Type' : 'Select Manufacturer First'}
+                      </option>
+                      {getModels(form.type, form.manufacturer).map((model: any) => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Installation Date */}
+                  <div>
+                    <label htmlFor='installationDate' className="block text-sm font-semibold text-gray-700 mb-2">
+                      Installation Date <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id='installationDate'
+                      type="date"
+                      name="installationDate"
+                      value={form.installationDate}
+                      onChange={handleChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                    />
+                  </div>
+
+                  {/* Operating Hours */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Operating Hours
+                    </label>
+                    <input
+                      type="number"
+                      name="operatingHours"
+                      value={form.operatingHours}
+                      onChange={handleChange}
+                      min="0"
+                      placeholder="Enter operating hours"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Manual Link */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Name <span className="text-red-500">*</span>
+                    Manual Link
                   </label>
                   <input
-                    type="text"
-                    name="name"
-                    value={form.name}
+                    type="url"
+                    name="manualLink"
+                    value={form.manualLink}
                     onChange={handleChange}
-                    placeholder="Enter equipment name"
+                    placeholder="https://example.com/manual.pdf"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
                   />
                 </div>
 
+                {/* Image Link */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Serial Number <span className="text-red-500">*</span>
+                    Image Link
                   </label>
                   <input
-                    type="text"
-                    name="serialNumber"
-                    value={form.serialNumber}
+                    type="url"
+                    name="imageLink"
+                    value={form.imageLink}
                     onChange={handleChange}
-                    placeholder="Enter serial number"
+                    placeholder="https://example.com/device-image.jpg"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={form.location}
-                    onChange={handleChange}
-                    placeholder="Enter equipment location"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="status" className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={form.status}
-                    onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gradient-to-r from-gray-50 to-white"
-                  >
-                    <option value="">Select Status</option>
-                    <option value="Operational">Operational</option>
-                    <option value="Under maintenance">Under maintenance</option>
-                    <option value="Out of order">Out of order</option>
-                  </select>
                 </div>
               </div>
 
@@ -368,3 +629,5 @@ export default function EquipmentManager() {
     </div>
   );
 }
+
+
