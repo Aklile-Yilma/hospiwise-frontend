@@ -1,9 +1,8 @@
 "use client";
 import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from "react";
-import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, DollarSign, User, Zap, MapPin, Settings, ExternalLink } from "lucide-react";
-import { api } from "@/api/api";
+import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, User, MapPin, Settings, ExternalLink } from "lucide-react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 // Updated TypeScript interfaces based on API response
 interface MaintenanceHistory {
@@ -154,10 +153,6 @@ const EquipmentDetailsPage: React.FC = () => {
   const [chatLoading, setChatLoading] = useState<boolean>(false);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchEquipmentDetails();
-  }, []);
-
   const fetchEquipmentDetails = async () => {
     try {
       setLoading(true);
@@ -177,6 +172,10 @@ const EquipmentDetailsPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchEquipmentDetails();
+  }, []);
 
   const getIssueTypeColor = (issue: string) => {
     switch (issue.toLowerCase()) {

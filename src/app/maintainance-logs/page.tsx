@@ -14,7 +14,6 @@ import {
   ClipboardList,
   AlertTriangle,
   Search,
-  Filter,
   BarChart3
 } from 'lucide-react';
 
@@ -60,7 +59,7 @@ export default function MaintenanceHistoryManager() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [equipmentOptions, setEquipmentOptions] = useState<Equipment[]>([]);
   const [availableIssues, setAvailableIssues] = useState<string[]>([]);
-  const [allIssueEnums, setAllIssueEnums] = useState<Record<string, string[]>>({});
+  // const [allIssueEnums, setAllIssueEnums] = useState<Record<string, string[]>>({});
   const [isTableLoading, setIsTableLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,16 +109,16 @@ export default function MaintenanceHistoryManager() {
 
   // Fetch all issue enums for reference
   const fetchAllIssueEnums = async () => {
-    try {
-      const response = await axios.get(`${API_BASE}/maintenance-history/issues/all`);
-      if (response.data.success) {
-        setAllIssueEnums(response.data.data);
-      } else {
-        setAllIssueEnums(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching issue enums:', error);
-    }
+    // try {
+    //   const response = await axios.get(`${API_BASE}/maintenance-history/issues/all`);
+    //   if (response.data.success) {
+    //     setAllIssueEnums(response.data.data);
+    //   } else {
+    //     setAllIssueEnums(response.data);
+    //   }
+    // } catch (error) {
+    //   console.error('Error fetching issue enums:', error);
+    // }
   };
 
   // Fetch valid issues for selected equipment type
@@ -409,7 +408,7 @@ export default function MaintenanceHistoryManager() {
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((row, index) => (
+                  filteredData.map((row) => (
                     <tr key={row._id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 transition-all duration-200">
                       <td className="p-4">
                         <span className="font-mono text-sm text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-200">

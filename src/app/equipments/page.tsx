@@ -13,10 +13,7 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  Calendar,
   Building,
-  Monitor,
-  Link,
   Clock, 
   FolderOpen
 } from 'lucide-react';
@@ -166,7 +163,7 @@ export default function EquipmentManager() {
 
   const handleChange = (e: React.ChangeEvent<any>) => {
     const { name, value, type } = e.target;
-    let updatedForm = { 
+    const updatedForm = { 
       ...form, 
       [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : value 
     };
