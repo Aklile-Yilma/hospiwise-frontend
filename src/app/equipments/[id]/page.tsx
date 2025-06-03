@@ -454,7 +454,9 @@ const EquipmentDetailsPage: React.FC = () => {
                           : "bg-white border border-gray-200 text-gray-800 shadow-sm"
                       }`}
                     >
-                      <p className="text-sm">{msg.text}</p>
+                      {/* <p className="text-sm">{msg.text}</p> */}
+                      <pre className="overflow-x-auto whitespace-pre-wrap">{msg.text}</pre>
+
                     </div>
                   </div>
                 ))}
