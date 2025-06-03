@@ -1,35 +1,43 @@
 "use client";
-import React, { useState, KeyboardEvent, ChangeEvent } from "react";
-import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, DollarSign, User, Zap } from "lucide-react";
+import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from "react";
+import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, DollarSign, User, Zap, MapPin, Settings, ExternalLink } from "lucide-react";
 import { api } from "@/api/api";
 import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
 
-// Define TypeScript types for equipment data
-interface MaintenanceLog {
-  date: string;
+// Updated TypeScript interfaces based on API response
+interface MaintenanceHistory {
+  _id: string;
+  equipment: string;
+  issue: string;
   description: string;
-  status: string;
+  resolution: string;
   technician: string;
-  cost: number;
-  priority: 'Low' | 'Medium' | 'High' | 'Critical';
-  duration: string;
-  partsUsed: string;
-  nextAction: string;
-}
-
-interface PredictiveStats {
-  [key: string]: string;
+  maintenanceDate: string;
+  maintenanceId: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 interface Equipment {
   _id: string;
+  id: string;
+  type: string;
   name: string;
-  model: string;
-  serialNumber: string;
+  serialNo: string;
   location: string;
-  imageUrl: string;
-  maintenanceLogs: MaintenanceLog[];
-  predictiveStats: PredictiveStats;
+  status: string;
+  manualLink: string;
+  imageLink: string;
+  installationDate: string;
+  manufacturer: string;
+  modelType: string;
+  operatingHours: number;
+  createdAt: string;
+  lastMaintenanceDate: string;
+  maintenanceHistory: MaintenanceHistory[];
+  __v: number;
 }
 
 interface ChatMessage {
@@ -37,160 +45,200 @@ interface ChatMessage {
   text: string;
 }
 
-const PredictiveStatsComponent: React.FC<{ stats: PredictiveStats }> = ({ stats }) => {
-  const getStatIcon = (key: string) => {
-    if (key.includes('Failure')) return <AlertTriangle className="w-5 h-5 text-orange-500" />;
-    if (key.includes('Maintenance')) return <Calendar className="w-5 h-5 text-blue-500" />;
-    if (key.includes('Usage')) return <Clock className="w-5 h-5 text-purple-500" />;
-    if (key.includes('Health')) return <TrendingUp className="w-5 h-5 text-green-500" />;
-    return <Zap className="w-5 h-5 text-indigo-500" />;
+const EquipmentStatsComponent: React.FC<{ equipment: Equipment }> = ({ equipment }) => {
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active': return 'text-green-600 bg-green-50 border-green-200';
+      case 'under maintenance': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'inactive': return 'text-red-600 bg-red-50 border-red-200';
+      case 'out of service': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
   };
 
-  const getHealthColor = (value: string) => {
-    const numValue = parseInt(value);
-    if (numValue >= 80) return 'text-green-600 bg-green-50';
-    if (numValue >= 60) return 'text-yellow-600 bg-yellow-50';
-    return 'text-red-600 bg-red-50';
+  const calculateUptime = () => {
+    const installDate = new Date(equipment.installationDate);
+    const now = new Date();
+    const daysSinceInstall = Math.floor((now.getTime() - installDate.getTime()) / (1000 * 60 * 60 * 24));
+    return daysSinceInstall > 0 ? Math.min(Math.floor((equipment.operatingHours / (daysSinceInstall * 24)) * 100), 100) : 0;
   };
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="w-6 h-6 text-indigo-600" />
-        <h3 className="text-xl font-bold text-gray-800">Predictive Analytics</h3>
+        <h3 className="text-xl font-bold text-gray-800">Equipment Overview</h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(stats).map(([key, value]) => (
-          <div key={key} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              {getStatIcon(key)}
-              <div>
-                <p className="text-sm font-medium text-gray-600">{key}</p>
-                <p className={`text-lg font-bold ${key.includes('Health') ? getHealthColor(value) : 'text-gray-800'} ${key.includes('Health') ? 'px-2 py-1 rounded-md' : ''}`}>
-                  {value}
-                </p>
-              </div>
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <Settings className="w-5 h-5 text-blue-500" />
+            <div>
+              <p className="text-sm font-medium text-gray-600">Current Status</p>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(equipment.status)}`}>
+                {equipment.status}
+              </span>
             </div>
           </div>
-        ))}
+        </div>
+
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-purple-500" />
+            <div>
+              <p className="text-sm font-medium text-gray-600">Operating Hours</p>
+              <p className="text-lg font-bold text-gray-800">{equipment.operatingHours.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-green-500" />
+            <div>
+              <p className="text-sm font-medium text-gray-600">Installation Date</p>
+              <p className="text-lg font-bold text-gray-800">
+                {new Date(equipment.installationDate).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="w-5 h-5 text-indigo-500" />
+            <div>
+              <p className="text-sm font-medium text-gray-600">Estimated Uptime</p>
+              <p className="text-lg font-bold text-gray-800">{calculateUptime()}%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <Wrench className="w-5 h-5 text-orange-500" />
+            <div>
+              <p className="text-sm font-medium text-gray-600">Last Maintenance</p>
+              <p className="text-lg font-bold text-gray-800">
+                {equipment.lastMaintenanceDate 
+                  ? new Date(equipment.lastMaintenanceDate).toLocaleDateString()
+                  : 'No maintenance recorded'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-green-500" />
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Maintenance</p>
+              <p className="text-lg font-bold text-gray-800">{equipment.maintenanceHistory.length}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 const EquipmentDetailsPage: React.FC = () => {
-  // Enhanced dummy equipment data
-  const equipment: Equipment = {
-    _id: "eq12345",
-    name: "Industrial Air Compressor",
-    model: "Atlas Copco GA315",
-    serialNumber: "AC-2024-7845",
-    location: "Production Floor B - Station 3",
-    imageUrl: "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6?auto=format&fit=crop&w=800&q=80",
-    maintenanceLogs: [
-      { 
-        date: "2025-02-15", 
-        description: "Replaced air filter and checked pressure sensors", 
-        status: "Completed",
-        technician: "John Martinez",
-        cost: 245.50,
-        priority: "Medium",
-        duration: "2.5 hours",
-        partsUsed: "Air filter (AF-315), Sensor kit",
-        nextAction: "Monitor pressure readings"
-      },
-      { 
-        date: "2024-12-01", 
-        description: "Full system lubrication and belt inspection", 
-        status: "Completed",
-        technician: "Sarah Chen",
-        cost: 125.00,
-        priority: "Low",
-        duration: "1.5 hours",
-        partsUsed: "Lubricant (5L), Drive belt",
-        nextAction: "Schedule next lubrication"
-      },
-      { 
-        date: "2024-09-20", 
-        description: "Emergency pressure valve replacement", 
-        status: "Completed",
-        technician: "Mike Rodriguez",
-        cost: 780.25,
-        priority: "Critical",
-        duration: "4 hours",
-        partsUsed: "Pressure valve, Gasket set",
-        nextAction: "Conduct stress test"
-      },
-      { 
-        date: "2024-07-10", 
-        description: "Routine quarterly inspection", 
-        status: "Completed",
-        technician: "Emily Watson",
-        cost: 95.00,
-        priority: "Low",
-        duration: "1 hour",
-        partsUsed: "None",
-        nextAction: "Update maintenance schedule"
-      }
-    ],
-    predictiveStats: {
-      "Failure Probability": "12%",
-      "Next Maintenance Due": "2025-06-30",
-      "Average Usage Hours": "760",
-      "Health Score": "89%",
-      "Efficiency Rating": "94%",
-      "Temperature Status": "Normal"
-    },
-  };
-
+  const params = useParams() 
+  const equipmentId = params.id;
+  const [equipment, setEquipment] = useState<Equipment | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState<string>("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState<boolean>(false);
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'High': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  useEffect(() => {
+    fetchEquipmentDetails();
+  }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'In Progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const handleChatSubmit = async () => {
-    if (!chatInput.trim()) return;
-
-    setChatMessages((prev) => [...prev, { sender: "user", text: chatInput }]);
-    setChatLoading(true);
-
-    const dataT = { prompt: chatInput }
-
-  try {
-      const res = await api.post("/query-ai", dataT) as any;
-
-      if (!res.ok) throw new Error("API request failed");
-
-      const data = await res.json();
-      const botResponse = data.response;
-
-      setChatMessages((prev) => [...prev, { sender: "bot", text: botResponse }]);
-    } catch (error) {
-      console.error("Chat error:", error);
-      setChatMessages((prev) => [...prev, { sender: "bot", text: "Error fetching AI response." }]);
+  const fetchEquipmentDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`https://hospiwise-backend.onrender.com/api/equipment/${equipmentId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch equipment details: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setEquipment(data);
+      handleIntialChatInput(data);
+    } catch (err) {
+      console.error("Error fetching equipment:", err);
+      setError(err instanceof Error ? err.message : 'Failed to load equipment details');
     } finally {
-      setChatLoading(false);
-      setChatInput("");
+      setLoading(false);
     }
   };
+
+  const getIssueTypeColor = (issue: string) => {
+    switch (issue.toLowerCase()) {
+      case 'software error': return 'bg-red-100 text-red-800 border-red-200';
+      case 'hardware failure': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'routine maintenance': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'calibration': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'cleaning': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+    const handleIntialChatInput = async (eqData: any) => {
+      setChatLoading(true);
+      try {
+        const res = await fetch("https://hospiwise-backend.onrender.com/api/ai/query", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ equipmentData: eqData })
+        });
+        
+        if (!res.ok) throw new Error("API request failed");
+        const data = await res.json();
+        
+        setChatSessionId(data.sessionId); // SAVE session ID
+        setChatMessages([{ sender: "bot", text: data.response }]);
+      } catch (error) {
+        console.error("Chat error:", error);
+        setChatMessages([{ sender: "bot", text: "Error fetching AI response." }]);
+      } finally {
+        setChatLoading(false);
+      }
+    };
+
+    const handleChatSubmit = async () => {
+      if (!chatInput.trim()) return;
+
+      setChatMessages((prev) => [...prev, { sender: "user", text: chatInput }]);
+      setChatLoading(true);
+
+      try {
+        const res = await fetch("https://hospiwise-backend.onrender.com/api/ai/query", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            prompt: chatInput,
+            sessionId: chatSessionId // INCLUDE session ID
+          })
+        });
+
+        if (!res.ok) throw new Error("API request failed");
+        const data = await res.json();
+        
+        setChatMessages((prev) => [...prev, { sender: "bot", text: data.response }]);
+      } catch (error) {
+        console.error("Chat error:", error);
+        setChatMessages((prev) => [...prev, { sender: "bot", text: "Error fetching AI response." }]);
+      } finally {
+        setChatLoading(false);
+        setChatInput("");
+      }
+    };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setChatInput(e.target.value);
@@ -203,19 +251,92 @@ const EquipmentDetailsPage: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading equipment details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center bg-white rounded-xl shadow-lg p-6">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Error Loading Equipment</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchEquipmentDetails}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!equipment) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">No equipment data found.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-4">
             <Wrench className="w-8 h-8 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-gray-800">{equipment.name}</h1>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">{equipment.name}</h1>
+              <p className="text-lg text-gray-600">{equipment.type}</p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-            <div><span className="font-medium">Model:</span> {equipment.model}</div>
-            <div><span className="font-medium">Serial:</span> {equipment.serialNumber}</div>
-            <div><span className="font-medium">Location:</span> {equipment.location}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-700">ID:</span> 
+              <span className="text-gray-600">{equipment.id}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-700">Model:</span> 
+              <span className="text-gray-600">{equipment.modelType}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-700">Serial:</span> 
+              <span className="text-gray-600">{equipment.serialNo}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-gray-500" />
+              <span className="font-medium text-gray-700">Location:</span> 
+              <span className="text-gray-600">{equipment.location}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-700">Manufacturer:</span> 
+              <span className="text-gray-600">{equipment.manufacturer}</span>
+            </div>
+            {equipment.manualLink && (
+              <div className="flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-indigo-600" />
+                <a 
+                  href={equipment.manualLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  User Manual
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
@@ -225,85 +346,84 @@ const EquipmentDetailsPage: React.FC = () => {
             {/* Equipment Image */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
               <Image
-                width={200}
-                height={200}
-                src={equipment.imageUrl}
+                width={800}
+                height={400}
+                src={equipment.imageLink || "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6"}
                 alt={equipment.name}
                 className="w-full h-64 object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6";
+                }}
               />
               <div className="p-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
-                <h3 className="text-lg font-semibold">Equipment Overview</h3>
-                <p className="text-indigo-100">Industrial-grade air compressor for high-volume applications</p>
+                <h3 className="text-lg font-semibold">{equipment.type} Overview</h3>
+                <p className="text-indigo-100">{equipment.modelType} by {equipment.manufacturer}</p>
               </div>
             </div>
 
-            {/* Predictive Stats */}
-            <PredictiveStatsComponent stats={equipment.predictiveStats} />
+            {/* Equipment Stats */}
+            <EquipmentStatsComponent equipment={equipment} />
 
-            {/* Maintenance Logs */}
+            {/* Maintenance History */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
               <div className="flex items-center gap-2 mb-4">
                 <Calendar className="w-6 h-6 text-indigo-600" />
                 <h3 className="text-xl font-bold text-gray-800">Maintenance History</h3>
               </div>
               
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                      <th className="text-left p-3 font-semibold text-gray-700">Date</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Description</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Technician</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Priority</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Cost</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Duration</th>
-                      <th className="text-left p-3 font-semibold text-gray-700">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {equipment.maintenanceLogs.map((log, idx) => (
-                      <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="p-3 text-sm">{new Date(log.date).toLocaleDateString()}</td>
-                        <td className="p-3 text-sm max-w-xs">
-                          <div className="font-medium text-gray-800">{log.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">Parts: {log.partsUsed}</div>
-                        </td>
-                        <td className="p-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-400" />
-                            {log.technician}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor(log.priority)}`}>
-                            {log.priority}
-                          </span>
-                        </td>
-                        <td className="p-3 text-sm">
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4 text-gray-400" />
-                            ${log.cost.toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="p-3 text-sm">
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4 text-gray-400" />
-                            {log.duration}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(log.status)}`}>
-                            <CheckCircle className="w-3 h-3 inline mr-1" />
-                            {log.status}
-                          </span>
-                        </td>
+              {equipment.maintenanceHistory.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p>No maintenance history recorded</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <th className="text-left p-3 font-semibold text-gray-700">Date</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Issue Type</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Description</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Resolution</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Technician</th>
+                        <th className="text-left p-3 font-semibold text-gray-700">Maintenance ID</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {equipment.maintenanceHistory.map((record) => (
+                        <tr key={record._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="p-3 text-sm">
+                            {new Date(record.maintenanceDate).toLocaleDateString()}
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getIssueTypeColor(record.issue)}`}>
+                              {record.issue}
+                            </span>
+                          </td>
+                          <td className="p-3 text-sm max-w-xs">
+                            <div className="font-medium text-gray-800">{record.description}</div>
+                          </td>
+                          <td className="p-3 text-sm max-w-xs">
+                            <div className="text-gray-600">{record.resolution}</div>
+                          </td>
+                          <td className="p-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-gray-400" />
+                              {record.technician}
+                            </div>
+                          </td>
+                          <td className="p-3 text-sm">
+                            <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                              {record.maintenanceId}
+                            </code>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-
           </div>
 
           {/* Right Section: Troubleshooting Chat */}

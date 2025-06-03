@@ -17,11 +17,14 @@ import {
   Building,
   Monitor,
   Link,
-  Clock
+  Clock, 
+  FolderOpen
 } from 'lucide-react';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 export default function EquipmentManager() {
+  const router = useRouter()
   const [equipmentList, setEquipmentList] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -148,6 +151,10 @@ export default function EquipmentManager() {
     }
     setOpen(true);
   };
+
+  const handleOpenDetails = (id: string) => {
+    router.push(`/equipments/${id}`);
+  }
 
   const handleClose = () => {
     setOpen(false);
@@ -362,6 +369,13 @@ export default function EquipmentManager() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleOpenDetails(eq._id)}
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-200 hover:border-indigo-300"
+                            title="Open"
+                          >
+                            <FolderOpen className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => handleOpen(index)}
                             className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-200 hover:border-indigo-300"
