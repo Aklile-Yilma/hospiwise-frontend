@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from "react";
 import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, User, MapPin, Settings, ExternalLink } from "lucide-react";
-import Image from "next/image";
+// import Image from "next/image";
 import { useParams } from "next/navigation";
 
 // Updated TypeScript interfaces based on API response
@@ -37,6 +37,20 @@ interface Equipment {
   lastMaintenanceDate: string;
   maintenanceHistory: MaintenanceHistory[];
   __v: number;
+}
+
+interface PredictionData {
+  equipment_id: string;
+  prediction: {
+    confidence: string;
+    days_to_failure: number;
+    failure_type: string;
+    method: string;
+    predicted_failure_date: string;
+    risk_level: string;
+  };
+  recommendations: string[];
+  timestamp: string;
 }
 
 interface ChatMessage {
@@ -146,7 +160,9 @@ const EquipmentDetailsPage: React.FC = () => {
   const params = useParams() 
   const equipmentId = params.id;
   const [equipment, setEquipment] = useState<Equipment | null>(null);
+  const [predictionData, setPredictionData] = useState<PredictionData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [predictionLoading, setPredictionLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState<string>("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -165,11 +181,38 @@ const EquipmentDetailsPage: React.FC = () => {
       const data = await response.json();
       setEquipment(data);
       handleIntialChatInput(data);
+      // Call prediction API after getting equipment data
+      fetchPredictionData(data);
     } catch (err) {
       console.error("Error fetching equipment:", err);
       setError(err instanceof Error ? err.message : 'Failed to load equipment details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPredictionData = async (equipmentData: Equipment) => {
+    try {
+      setPredictionLoading(true);
+      const response = await fetch('https://equipment-prediction-api.onrender.com/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(equipmentData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch prediction: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setPredictionData(data);
+    } catch (err) {
+      console.error("Error fetching prediction:", err);
+      // Don't show error for prediction, just skip it
+    } finally {
+      setPredictionLoading(false);
     }
   };
 
@@ -185,6 +228,48 @@ const EquipmentDetailsPage: React.FC = () => {
       case 'calibration': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'cleaning': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getRiskLevelColor = (riskLevel: string) => {
+    switch (riskLevel.toLowerCase()) {
+      case 'low': return 'text-green-600 bg-green-50 border-green-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'high': return 'text-red-600 bg-red-50 border-red-200';
+      case 'critical': return 'text-red-700 bg-red-100 border-red-300';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getFailureTypeIcon = (failureType: string) => {
+    switch (failureType.toLowerCase()) {
+      case 'software error': return <AlertTriangle className="w-5 h-5 text-red-500" />;
+      case 'hardware failure': return <Wrench className="w-5 h-5 text-orange-500" />;
+      default: return <AlertTriangle className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const getRecommendationIcon = (recommendation: string) => {
+    if (recommendation.includes('✅') || recommendation.includes('Continue')) {
+      return <CheckCircle className="w-5 h-5 text-green-500" />;
+    } else if (recommendation.includes('💻') || recommendation.includes('Update') || recommendation.includes('firmware')) {
+      return <Settings className="w-5 h-5 text-blue-500" />;
+    } else if (recommendation.includes('⚠️') || recommendation.includes('Warning')) {
+      return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+    } else {
+      return <Wrench className="w-5 h-5 text-indigo-500" />;
+    }
+  };
+
+  const getRecommendationStyle = (recommendation: string) => {
+    if (recommendation.includes('✅') || recommendation.includes('Continue')) {
+      return 'border-l-4 border-green-500 bg-green-50';
+    } else if (recommendation.includes('💻') || recommendation.includes('Update')) {
+      return 'border-l-4 border-blue-500 bg-blue-50';
+    } else if (recommendation.includes('⚠️') || recommendation.includes('Warning')) {
+      return 'border-l-4 border-yellow-500 bg-yellow-50';
+    } else {
+      return 'border-l-4 border-indigo-500 bg-indigo-50';
     }
   };
 
@@ -344,7 +429,7 @@ const EquipmentDetailsPage: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Equipment Image */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-              <Image
+              {/* <Image
                 width={800}
                 height={400}
                 src={equipment.imageLink || "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6"}
@@ -353,7 +438,7 @@ const EquipmentDetailsPage: React.FC = () => {
                 onError={(e) => {
                   e.currentTarget.src = "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6";
                 }}
-              />
+              /> */}
               <div className="p-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
                 <h3 className="text-lg font-semibold">{equipment.type} Overview</h3>
                 <p className="text-indigo-100">{equipment.modelType} by {equipment.manufacturer}</p>
@@ -362,6 +447,127 @@ const EquipmentDetailsPage: React.FC = () => {
 
             {/* Equipment Stats */}
             <EquipmentStatsComponent equipment={equipment} />
+
+            {/* AI Prediction Section */}
+            {predictionLoading ? (
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                  <h3 className="text-xl font-bold text-gray-800">Loading AI Prediction...</h3>
+                </div>
+              </div>
+            ) : predictionData ? (
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                  <h3 className="text-xl font-bold text-gray-800">AI Failure Prediction</h3>
+                  <span className="ml-auto text-xs text-gray-500">
+                    {new Date(predictionData.timestamp).toLocaleString()}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-purple-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Confidence Level</p>
+                        <p className="text-xl font-bold text-purple-700">{predictionData.prediction.confidence}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Days to Potential Failure</p>
+                        <p className="text-xl font-bold text-gray-800">{predictionData.prediction.days_to_failure} days</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      {getFailureTypeIcon(predictionData.prediction.failure_type)}
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Predicted Failure Type</p>
+                        <p className="text-lg font-bold text-gray-800">{predictionData.prediction.failure_type}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Risk Level</p>
+                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getRiskLevelColor(predictionData.prediction.risk_level)}`}>
+                          {predictionData.prediction.risk_level}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-indigo-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Predicted Failure Date</p>
+                        <p className="text-lg font-bold text-gray-800">
+                          {new Date(predictionData.prediction.predicted_failure_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg p-4 border border-indigo-200">
+                    <div className="flex items-center gap-3">
+                      <Settings className="w-5 h-5 text-indigo-500" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Prediction Method</p>
+                        <p className="text-sm font-bold text-indigo-700">{predictionData.prediction.method}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* AI Recommendations */}
+            {predictionData && predictionData.recommendations && (
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                  <h3 className="text-xl font-bold text-gray-800">AI Recommendations</h3>
+                </div>
+                
+                {predictionData.recommendations.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                    <p>No recommendations available</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {predictionData.recommendations.map((recommendation, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-lg transition-all duration-200 hover:shadow-md ${getRecommendationStyle(recommendation)}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {getRecommendationIcon(recommendation)}
+                          <div className="flex-1">
+                            <p className="text-gray-800 font-medium leading-relaxed">
+                              {recommendation}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Maintenance History */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
