@@ -221,16 +221,96 @@ const EquipmentDetailsPage: React.FC = () => {
   }, []);
 
   const getIssueTypeColor = (issue: string) => {
-    switch (issue.toLowerCase()) {
-      case 'software error': return 'bg-red-100 text-red-800 border-red-200';
-      case 'hardware failure': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'routine maintenance': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'calibration': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'cleaning': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
+  switch (issue.toLowerCase()) {
+    // Existing issues
+    case 'software error': return 'bg-red-100 text-red-800 border-red-200';
+    case 'hardware failure': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'routine maintenance': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'calibration': return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'cleaning': return 'bg-green-100 text-green-800 border-green-200';
+    
+    // New issue types for all equipment
+    case 'battery failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'electrode malfunction': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'charging issues': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'shock delivery failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'power supply problem': return 'bg-red-100 text-red-800 border-red-200';
+    case 'display not working': return 'bg-orange-100 text-orange-800 border-orange-200';
+    
+    // Infusion pump issues
+    case 'occlusion detected': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'flow rate inaccurate': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'air-in-line alarm': return 'bg-red-100 text-red-800 border-red-200';
+    case 'battery not charging': return 'bg-red-100 text-red-800 border-red-200';
+    case 'pump motor error': return 'bg-red-100 text-red-800 border-red-200';
+    case 'keypad/touchscreen fault': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'alarm not functioning': return 'bg-red-100 text-red-800 border-red-200';
+    
+    // Patient monitor issues
+    case 'ecg lead detachment': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'spo₂ sensor malfunction': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'display flickering or dead': return 'bg-red-100 text-red-800 border-red-200';
+    case 'inaccurate readings': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'power supply issues': return 'bg-red-100 text-red-800 border-red-200';
+    case 'alarm not triggering': return 'bg-red-100 text-red-800 border-red-200';
+    case 'data communication failure': return 'bg-red-100 text-red-800 border-red-200';
+    
+    // Suction machine issues
+    case 'low suction pressure': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'motor overheating': return 'bg-red-100 text-red-800 border-red-200';
+    case 'tubing blockage': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'canister leak': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'filter clogging': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'noisy operation': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'power switch malfunction': return 'bg-red-100 text-red-800 border-red-200';
+    
+    // Ultrasound issues
+    case 'probe failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'image artifacts': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'poor image quality': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'calibration drift': return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'software crash': return 'bg-red-100 text-red-800 border-red-200';
+    case 'power supply issue': return 'bg-red-100 text-red-800 border-red-200';
+    case 'display unit failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'transducer malfunction': return 'bg-red-100 text-red-800 border-red-200';
+    
+    // CT Scanner issues
+    case 'x-ray tube failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'cooling system failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'gantry malfunction': return 'bg-red-100 text-red-800 border-red-200';
+    case 'detector array issue': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'radiation dose error': return 'bg-red-100 text-red-800 border-red-200';
+    case 'table movement error': return 'bg-orange-100 text-orange-800 border-orange-200';
+    
+    // MRI issues
+    case 'magnet quench': return 'bg-red-100 text-red-800 border-red-200';
+    case 'rf shielding failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'gradient coil issue': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'helium loss': return 'bg-red-100 text-red-800 border-red-200';
+    case 'shimming problems': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'cryogenic system failure': return 'bg-red-100 text-red-800 border-red-200';
+    
+    // Anesthesia Machine issues
+    case 'gas leak': return 'bg-red-100 text-red-800 border-red-200';
+    case 'ventilator failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'flow meter malfunction': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'vaporizer issue': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'sensor malfunction': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'calibration error': return 'bg-purple-100 text-purple-800 border-purple-200';
+    case 'power failure': return 'bg-red-100 text-red-800 border-red-200';
+    case 'display failure': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'breathing circuit problem': return 'bg-orange-100 text-orange-800 border-orange-200';
+    
+    // X-ray issues
+    case 'image noise': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'cooling system issue': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'detector malfunction': return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'software error': return 'bg-red-100 text-red-800 border-red-200';
+    case 'collimator problem': return 'bg-orange-100 text-orange-800 border-orange-200';
+    
+    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
   const getRiskLevelColor = (riskLevel: string) => {
     switch (riskLevel.toLowerCase()) {
       case 'low': return 'text-green-600 bg-green-50 border-green-200';
@@ -243,11 +323,47 @@ const EquipmentDetailsPage: React.FC = () => {
 
   const getFailureTypeIcon = (failureType: string) => {
     switch (failureType.toLowerCase()) {
-      case 'software error': return <AlertTriangle className="w-5 h-5 text-red-500" />;
-      case 'hardware failure': return <Wrench className="w-5 h-5 text-orange-500" />;
-      default: return <AlertTriangle className="w-5 h-5 text-gray-500" />;
+      case 'software error':
+      case 'software crash':
+      case 'software glitch':
+        return <AlertTriangle className="w-5 h-5 text-red-500" />;
+      case 'hardware failure':
+      case 'power supply problem':
+      case 'power supply issue':
+      case 'power failure':
+      case 'battery failure':
+      case 'motor error':
+      case 'pump motor error':
+        return <Wrench className="w-5 h-5 text-orange-500" />;
+      case 'calibration drift':
+      case 'calibration error':
+        return <Settings className="w-5 h-5 text-purple-500" />;
+      case 'cooling system failure':
+      case 'cooling system issue':
+        return <AlertTriangle className="w-5 h-5 text-blue-500" />;
+      case 'display failure':
+      case 'display not working':
+      case 'display unit failure':
+        return <AlertTriangle className="w-5 h-5 text-orange-500" />;
+      default: 
+        return <AlertTriangle className="w-5 h-5 text-gray-500" />;
     }
   };
+
+  const getEquipmentTypeIcon = (type: string) => {
+    const icons = {
+      'Defibrillator': '⚡',
+      'Infusion pump': '💉',
+      'Patient monitor': '📊',
+      'Suction machine': '🔄',
+      'ULTRASOUND': '🔊',
+      'CTScanner': '⚕️',
+      'MRI': '🧲',
+      'Anesthesia Machine': '😷',
+      'XRAY': '☢️'
+    };
+  return icons[type as keyof typeof icons] || '⚙️';
+};
 
   const getRecommendationIcon = (recommendation: string) => {
     if (recommendation.includes('✅') || recommendation.includes('Continue')) {
@@ -381,8 +497,15 @@ const EquipmentDetailsPage: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
           <div className="flex items-center gap-3 mb-4">
             <Wrench className="w-8 h-8 text-indigo-600" />
-            <div>
+            {/* <div>
               <h1 className="text-3xl font-bold text-gray-800">{equipment.name}</h1>
+              <p className="text-lg text-gray-600">{equipment.type}</p>
+            </div> */}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                <span className="text-2xl">{getEquipmentTypeIcon(equipment.type)}</span>
+                {equipment.name}
+              </h1>
               <p className="text-lg text-gray-600">{equipment.type}</p>
             </div>
           </div>
@@ -428,7 +551,7 @@ const EquipmentDetailsPage: React.FC = () => {
           {/* Left Section: Equipment Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Equipment Image */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+            {/* <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100"> */}
               {/* <Image
                 width={800}
                 height={400}
@@ -438,13 +561,53 @@ const EquipmentDetailsPage: React.FC = () => {
                 onError={(e) => {
                   e.currentTarget.src = "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6";
                 }}
+                                 // <img
+                //   src={equipment.imageLink}
+                //   alt={equipment.name}
+                //   className="w-full h-64 object-cover"
+                //   onError={(e) => {
+                //     e.currentTarget.style.display = 'none';
+                //     // e.currentTarget.nextElementSibling.style.display = 'flex';
+                //   }}
+                // />
               /> */}
-              <div className="p-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+              {/* <div className="p-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
                 <h3 className="text-lg font-semibold">{equipment.type} Overview</h3>
+                <p className="text-indigo-100">{equipment.modelType} by {equipment.manufacturer}</p>
+              </div> */}
+            {/* </div> */}
+
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+              {equipment.imageLink ? (
+              //  <Image
+              //     width={800}
+              //     height={400}
+              //     src={equipment.imageLink || "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6"}
+              //     alt={equipment.name}
+              //     className="w-full h-64 object-cover"
+              //     onError={(e) => {
+              //       e.currentTarget.src = "https://images.unsplash.com/photo-1581093588401-cb7c9e7588a6";
+              //     }}
+              //   />
+              null
+              ) : null}
+              <div 
+                className={`${equipment.imageLink ? 'hidden' : 'flex'} w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 items-center justify-center`}
+                style={{ display: equipment.imageLink ? 'none' : 'flex' }}
+              >
+                <div className="text-center">
+                  <span className="text-6xl mb-4 block">{getEquipmentTypeIcon(equipment.type)}</span>
+                  <p className="text-gray-500 font-medium">No image available</p>
+                </div>
+              </div>
+              <div className="p-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <span>{getEquipmentTypeIcon(equipment.type)}</span>
+                  {equipment.type} Overview
+                </h3>
                 <p className="text-indigo-100">{equipment.modelType} by {equipment.manufacturer}</p>
               </div>
             </div>
-
             {/* Equipment Stats */}
             <EquipmentStatsComponent equipment={equipment} />
 

@@ -65,6 +65,8 @@ export default function MaintenanceHistoryManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTechnician, setFilterTechnician] = useState('');
   const [filterEquipmentType, setFilterEquipmentType] = useState('');
+  const [sortBy, setSortBy] = useState<keyof MaintenanceRecord | 'equipmentName' | 'equipmentType'>('maintenanceDate');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [form, setForm] = useState<FormData>({
     equipment: {
       name: '',
@@ -294,6 +296,59 @@ export default function MaintenanceHistoryManager() {
       record.equipment?.type === filterEquipmentType;
 
     return matchesSearch && matchesTechnician && matchesEquipmentType;
+  }).sort((a, b) => {
+    let aValue, bValue;
+
+    switch (sortBy) {
+      case 'maintenanceDate':
+        aValue = new Date(a.maintenanceDate);
+        bValue = new Date(b.maintenanceDate);
+        break;
+      case 'maintenanceId':
+        aValue = a.maintenanceId || a._id;
+        bValue = b.maintenanceId || b._id;
+        break;
+      case 'equipmentName':
+        aValue = a.equipment?.name?.toLowerCase() || '';
+        bValue = b.equipment?.name?.toLowerCase() || '';
+        break;
+      case 'equipmentType':
+        aValue = a.equipment?.type?.toLowerCase() || '';
+        bValue = b.equipment?.type?.toLowerCase() || '';
+        break;
+      case 'issue':
+        aValue = a.issue?.toLowerCase() || '';
+        bValue = b.issue?.toLowerCase() || '';
+        break;
+      case 'technician':
+        aValue = a.technician?.toLowerCase() || '';
+        bValue = b.technician?.toLowerCase() || '';
+        break;
+      case 'createdAt':
+        aValue = new Date(a.createdAt);
+        bValue = new Date(b.createdAt);
+        break;
+      default:
+        aValue = a[sortBy as keyof MaintenanceRecord];
+        bValue = b[sortBy as keyof MaintenanceRecord];
+    }
+
+    // Handle date comparison
+    if (aValue instanceof Date && bValue instanceof Date) {
+      return sortOrder === 'asc' ? aValue.getTime() - bValue.getTime() : bValue.getTime() - aValue.getTime();
+    }
+
+    // Handle string comparison
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+    }
+
+    // Handle other types
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
   });
 
   // Get unique technicians and equipment types for filters
@@ -328,7 +383,7 @@ export default function MaintenanceHistoryManager() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
+        {/* <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -368,13 +423,99 @@ export default function MaintenanceHistoryManager() {
               Statistics
             </button>
           </div>
+        </div> */}
+
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="relative lg:col-span-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search records..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            
+            <select
+              value={filterTechnician}
+              onChange={(e) => setFilterTechnician(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Technicians</option>
+              {uniqueTechnicians.map(tech => (
+                <option key={tech} value={tech}>{tech}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterEquipmentType}
+              onChange={(e) => setFilterEquipmentType(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Equipment Types</option>
+              {uniqueEquipmentTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as keyof MaintenanceRecord)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="maintenanceDate">Sort by Date</option>
+              <option value="maintenanceId">Sort by ID</option>
+              <option value="equipmentName">Sort by Equipment</option>
+              <option value="equipmentType">Sort by Type</option>
+              <option value="issue">Sort by Issue</option>
+              <option value="technician">Sort by Technician</option>
+              <option value="createdAt">Sort by Created</option>
+            </select>
+
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </select>
+          </div>
+
+          {/* Results Summary and Clear Filters */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 pt-4 border-t border-gray-200">
+            <div className="text-sm text-gray-600">
+              Showing {filteredData.length} of {data.length} maintenance records
+              {searchTerm && (
+                <span className="ml-1">
+                  matching "<span className="font-medium text-indigo-600">{searchTerm}</span>"
+                </span>
+              )}
+            </div>
+            
+            {(searchTerm || filterTechnician || filterEquipmentType) && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterTechnician('');
+                  setFilterEquipmentType('');
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-indigo-600 border border-gray-300 rounded-lg hover:border-indigo-300 transition-colors"
+              >
+                <X className="w-4 h-4" />
+                Clear Filters
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              {/* <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <tr>
                   <th className="text-left p-4 font-semibold text-gray-700">Maintenance ID</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Equipment</th>
@@ -383,6 +524,132 @@ export default function MaintenanceHistoryManager() {
                   <th className="text-left p-4 font-semibold text-gray-700">Issue</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Description</th>
                   <th className="text-left p-4 font-semibold text-gray-700">Technician</th>
+                  <th className="text-center p-4 font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead> */}
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <tr>
+                  <th 
+                    className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => {
+                      if (sortBy === 'maintenanceId') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('maintenanceId');
+                        setSortOrder('asc');
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      Maintenance ID
+                      {sortBy === 'maintenanceId' && (
+                        <span className="text-indigo-600">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => {
+                      if (sortBy === 'equipmentName') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('equipmentName');
+                        setSortOrder('asc');
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      Equipment
+                      {sortBy === 'equipmentName' && (
+                        <span className="text-indigo-600">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => {
+                      if (sortBy === 'equipmentType') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('equipmentType');
+                        setSortOrder('asc');
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      Type
+                      {sortBy === 'equipmentType' && (
+                        <span className="text-indigo-600">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => {
+                      if (sortBy === 'maintenanceDate') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('maintenanceDate');
+                        setSortOrder('desc');
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      Date
+                      {sortBy === 'maintenanceDate' && (
+                        <span className="text-indigo-600">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => {
+                      if (sortBy === 'issue') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('issue');
+                        setSortOrder('asc');
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      Issue
+                      {sortBy === 'issue' && (
+                        <span className="text-indigo-600">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Description</th>
+                  <th 
+                    className="text-left p-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => {
+                      if (sortBy === 'technician') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('technician');
+                        setSortOrder('asc');
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      Technician
+                      {sortBy === 'technician' && (
+                        <span className="text-indigo-600">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
                   <th className="text-center p-4 font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
