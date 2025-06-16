@@ -27,8 +27,6 @@ import {
   Calendar,
   Activity,
   BarChart3,
-  Users,
-  Building,
   Zap
 } from 'lucide-react';
 
