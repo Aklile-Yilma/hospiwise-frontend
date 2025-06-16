@@ -14,7 +14,6 @@ import {
   ClipboardList,
   AlertTriangle,
   Search,
-  BarChart3
 } from 'lucide-react';
 
 interface Equipment {

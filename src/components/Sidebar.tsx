@@ -49,10 +49,10 @@ const HospiwiseSidebar = () => {
       color: 'text-purple-600'
     },
     { 
-      name: 'Analytics', 
+      name: 'Report Failure', 
       icon: Activity, 
-      path: '/analytics', 
-      description: 'Performance Metrics',
+      path: '/report-failure', 
+      description: 'Report Failure',
       color: 'text-green-600'
     },
     { 
@@ -102,7 +102,7 @@ const HospiwiseSidebar = () => {
             </div>
           </div>
           <h1 className="text-xl font-bold text-white text-center">Hospiwise</h1>
-          <p className="text-slate-400 text-sm text-center mt-1">Equipment Management</p>
+          <p className="text-slate-400 text-sm text-center mt-1">Decision Support System</p>
         </div>
 
         {/* User Profile Section */}
@@ -112,7 +112,7 @@ const HospiwiseSidebar = () => {
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">John Martinez</p>
+              <p className="text-white text-sm font-medium truncate">Eden Getahun</p>
               <p className="text-slate-400 text-xs truncate">Maintenance Tech</p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400" />
