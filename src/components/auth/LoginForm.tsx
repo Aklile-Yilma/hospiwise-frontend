@@ -18,26 +18,19 @@ export default function LoginForm() {
     setError('');
 
     try {
-      // const result = await authClient.signIn.email({
-      //   email,
-      //   password,
-      // });
-
-      const result = await signIn();
-
-      console.log("result", result)
-      // if (result.error) {
-      //   setError(result.error.message || 'Login failed');
-      // } 
-      // else if (result.data?.twoFactorRedirect) {
-      //   // User has 2FA enabled, redirect to 2FA page
-      //   router.push('/auth/two-factor');
-      // } 
-      
-      // else {
-      //   // Successful login
-      //   router.push('/dashboard');
-      // }
+      const { data, error } = await authClient.signIn.email({
+    
+              email,
+              password,
+              callbackURL: "/dashboard",
+              /**
+               * remember the user session after the browser is closed. 
+               * @default true
+               */
+              rememberMe: true
+      }, {
+          //callbacks
+      })
     } catch (err) {
       console.log(err)
       setError('An unexpected error occurred');
