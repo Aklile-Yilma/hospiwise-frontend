@@ -113,7 +113,7 @@ const HospiwiseSidebar = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white text-sm font-medium truncate">Eden Getahun</p>
-              <p className="text-slate-400 text-xs truncate">Maintenance Tech</p>
+              <p className="text-slate-400 text-xs truncate">Biomedical Engineer</p>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
