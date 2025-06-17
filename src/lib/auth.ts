@@ -7,8 +7,8 @@ import { nextCookies } from 'better-auth/next-js';
 
 export const auth = betterAuth({
   appName: 'Hospiwise',
-  // baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
-  baseURL: 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  // baseURL: 'http://localhost:3000',
   database: mongodbAdapter(getDatabase()),
   emailAndPassword: {
     enabled: true,
