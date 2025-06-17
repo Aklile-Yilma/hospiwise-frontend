@@ -21,7 +21,7 @@ export default function LoginForm() {
     
               email,
               password,
-              callbackURL: "/dashboard",
+              callbackURL: "/",
               /**
                * remember the user session after the browser is closed. 
                * @default true
