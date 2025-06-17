@@ -4,7 +4,9 @@ import {
   Plus,
   X,
   Save,
-  Loader2
+  Loader2,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 // TypeScript interfaces
@@ -61,6 +63,8 @@ export default function FailureReportForm({ onReportSubmitted }: Props) {
   const [availableIssues, setAvailableIssues] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showForm, setShowForm] = useState<boolean>(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  
 
   const [form, setForm] = useState<FormData>({
     equipment: '',
@@ -117,6 +121,10 @@ export default function FailureReportForm({ onReportSubmitted }: Props) {
     }
   };
 
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -149,7 +157,8 @@ export default function FailureReportForm({ onReportSubmitted }: Props) {
         onReportSubmitted(result.data);
         resetForm();
         setShowForm(false);
-        alert('Failure report submitted successfully!');
+        setSnackbar({ open: true, message: 'Failure report submitted successfully!!', severity: 'success' });
+        // alert('Failure report submitted successfully!');
       } else {
         const error = await response.json();
         console.error('Server error:', error);
@@ -367,6 +376,30 @@ export default function FailureReportForm({ onReportSubmitted }: Props) {
               </button>
             </div>
           </form>
+                  {/* Snackbar */}
+          {snackbar.open && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <div className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border-l-4 transition-all duration-300 ${
+              snackbar.severity === 'success' 
+                ? 'bg-green-50 border-green-500 text-green-800' 
+                : 'bg-red-50 border-red-500 text-red-800'
+            }`}>
+              {snackbar.severity === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-600" />
+              )}
+              <span className="font-medium">{snackbar.message}</span>
+              <button
+                title='Delete'
+                onClick={handleSnackbarClose}
+                className="ml-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
         </div>
       )}
     </>
