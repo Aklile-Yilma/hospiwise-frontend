@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Eye, EyeOff, Mail, Lock, Chrome, Loader2, AlertTriangle } from 'lucide-react';
-import { signIn } from '@/server/users';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
