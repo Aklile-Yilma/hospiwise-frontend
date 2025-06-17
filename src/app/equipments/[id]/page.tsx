@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from "react";
-import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, User, MapPin, Settings, ExternalLink } from "lucide-react";
+import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, User, MapPin, Settings } from "lucide-react";
 // import Image from "next/image";
 import { useParams } from "next/navigation";
 import QrCodeDownloader from "@/components/QRCodeGenerator";
