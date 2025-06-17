@@ -31,6 +31,7 @@ export default function LoginForm() {
       }, {
           //callbacks
       })
+      console.log(data, error)
     } catch (err) {
       console.log(err)
       setError('An unexpected error occurred');
