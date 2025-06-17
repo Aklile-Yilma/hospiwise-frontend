@@ -3,6 +3,7 @@ import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from "react";
 import { Send, Wrench, Calendar, TrendingUp, AlertTriangle, CheckCircle, Clock, User, MapPin, Settings, ExternalLink } from "lucide-react";
 // import Image from "next/image";
 import { useParams } from "next/navigation";
+import QrCodeDownloader from "@/components/QRCodeGenerator";
 
 // Updated TypeScript interfaces based on API response
 interface MaintenanceHistory {
@@ -531,7 +532,7 @@ const EquipmentDetailsPage: React.FC = () => {
               <span className="font-medium text-gray-700">Manufacturer:</span> 
               <span className="text-gray-600">{equipment.manufacturer}</span>
             </div>
-            {equipment.manualLink && (
+            {/* {equipment.manualLink && (
               <div className="flex items-center gap-2">
                 <ExternalLink className="w-4 h-4 text-indigo-600" />
                 <a 
@@ -543,7 +544,14 @@ const EquipmentDetailsPage: React.FC = () => {
                   User Manual
                 </a>
               </div>
-            )}
+            )} */}
+
+            {
+              equipmentId && (
+                <QrCodeDownloader url={`https://hospiwise-frontend.vercel.app/equipments/${equipmentId}`}/>
+              )
+            }
+
           </div>
         </div>
 
